@@ -344,6 +344,8 @@ slotsContainer.appendChild(slot);
 
 });
 
+}
+
 continueBtn.addEventListener("click", async () => {
 
     if (continueBtn.disabled) return;
