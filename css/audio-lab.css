@@ -1,0 +1,958 @@
+<section class="audio-lab">
+
+    <div class="audio-lab-header">
+
+        <span class="audio-label">
+            MRKLL AUDIO LAB
+        </span>
+
+        <h2>
+            HEAR THE DIFFERENCE.
+        </h2>
+
+        <p>
+            Experience the real impact of professional audio engineering.
+            Every comparison is level matched to ensure an honest listening experience.
+        </p>
+
+    </div>
+
+    <div class="audio-tabs">
+
+        <button class="audio-tab active">
+            RECORDING
+        </button>
+
+        <button class="audio-tab">
+            MIXING
+        </button>
+
+        <button class="audio-tab">
+            MASTERING
+        </button>
+
+        <button class="audio-tab">
+            PRODUCTION
+        </button>
+
+    </div>
+
+    <div class="audio-player">
+
+        <div class="project-info">
+
+            <div>
+
+                <span>PROJECT</span>
+
+                <strong>Trap Demo</strong>
+
+            </div>
+
+            <div>
+
+                <span>DURATION</span>
+
+                <strong>01:32</strong>
+
+            </div>
+
+            <div>
+
+                <span>SERVICE</span>
+
+                <strong>Mixing</strong>
+
+            </div>
+
+        </div>
+
+        <div class="comparison-switch">
+
+            <button class="compare-btn active">
+
+                RAW
+
+            </button>
+
+            <div class="switch-line">
+
+                <div class="switch-dot"></div>
+
+            </div>
+
+            <button class="compare-btn">
+
+                MRKLL
+
+            </button>
+
+        </div>
+
+        <button class="play-button">
+
+            ▶
+
+        </button>
+
+        <div class="timeline">
+
+            <div class="timeline-progress"></div>
+
+        </div>
+
+        <div class="time">
+
+            <span>00:00</span>
+
+            <span>01:32</span>
+
+        </div>
+
+        <div class="changes">
+
+            <h3>
+                WHAT CHANGED?
+            </h3>
+
+            <ul>
+
+                <li>Better vocal clarity</li>
+
+                <li>Controlled low end</li>
+
+                <li>Improved stereo image</li>
+
+                <li>More punch</li>
+
+            </ul>
+
+        </div>
+
+        <div class="honest">
+
+            <span>
+
+                HONEST COMPARISON
+
+            </span>
+
+            <p>
+
+                Every comparison is level matched.
+
+                No loudness tricks.
+
+                Only the work.
+
+            </p>
+
+        </div>
+
+    </div>
+
+</section>
+
+/* =======================================
+   TABS
+======================================= */
+
+
+
+
+.audio-tab{
+
+    background:none;
+
+    border:none;
+
+    color:#666;
+
+    font-size:.95rem;
+
+    letter-spacing:2px;
+
+    padding:20px 0;
+
+    cursor:pointer;
+
+    transition:.35s;
+
+    position:relative;
+
+}
+
+.audio-tab:hover{
+
+    color:white;
+
+}
+
+.audio-tab.active{
+
+    color:var(--red);
+
+}
+
+.audio-tab.active::after{
+
+    
+    content:"";
+
+    position:absolute;
+
+    bottom:-1px;
+
+    left:0;
+
+    width:100%;
+
+    height:2px;
+
+    background:var(--red);
+
+}
+
+
+/* =======================================
+   PLAYER
+======================================= */
+
+.audio-player{
+
+    border:1px solid rgba(255,255,255,.08);
+
+    padding: 40px 45px;
+
+    background:rgba(255,255,255,.015);
+
+}
+
+.project-info{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    margin-bottom:50px;
+
+}
+
+.project-info span{
+
+    display:block;
+
+    color:#666;
+
+    font-size:.75rem;
+
+    letter-spacing:2px;
+
+    margin-bottom:10px;
+
+}
+
+.project-info strong{
+
+    font-size:1.2rem;
+
+}
+
+.comparison-switch{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    gap:30px;
+
+margin:25px 0;
+}
+
+.compare-btn{
+
+    background:none;
+
+    border:none;
+
+    color:#666;
+
+    cursor:pointer;
+
+    letter-spacing:2px;
+
+    transition:.3s;
+
+}
+
+.compare-btn.active{
+
+    color:var(--red);
+
+}
+
+.switch-line{
+
+    width:140px;
+
+    height:2px;
+
+    background:#333;
+
+    position:relative;
+
+}
+
+.switch-dot{
+
+    width:16px;
+
+    height:16px;
+
+    border-radius:50%;
+
+    background:var(--red);
+
+    position:absolute;
+
+    top:-7px;
+
+    left:0;
+
+}
+
+.play-button{
+
+    width:72px;
+height:72px;
+
+    border-radius:50%;
+
+    border:1px solid #ff2b2b;
+
+    background:black;
+
+    color:white;
+
+    font-size:2rem;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    margin:25px auto 20px;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+}
+
+.play-button:hover{
+
+    background:#ff2b2b;
+
+    color:black;
+
+    transform:scale(1.08);
+
+}
+
+
+
+.timeline{
+
+    .timeline{
+
+        margin:18px 0 12px;
+    
+    }
+
+    width:100%;
+
+    height:6px;
+
+    background:#1a1a1a;
+
+    border-radius:30px;
+
+    overflow:hidden;
+
+    margin-top:20px;
+
+}
+
+.timeline-progress{
+
+    height:100%;
+
+    width:0;
+
+    background:#ff2b2b;
+
+    transition:.05s linear;
+
+}
+
+.time{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    color:#777;
+
+    font-size:.8rem;
+
+}
+
+.changes{
+
+    margin-top:28px;
+}
+
+.changes h3{
+
+    color:var(--red);
+
+    margin-bottom:25px;
+
+}
+
+.changes ul{
+
+    list-style:none;
+
+    padding:0;
+
+}
+
+.changes li{
+
+    margin:18px 0;
+
+    color:#c7c7c7;
+
+}
+
+.honest{
+
+    margin-top:25px;
+    padding-top:20px;
+
+    border-top:1px solid rgba(255,255,255,.08);
+
+}
+
+.honest span{
+
+    color:var(--red);
+
+    letter-spacing:2px;
+
+    display:block;
+
+    margin-bottom:18px;
+
+}
+
+.honest p{
+
+    color:#888;
+
+    line-height:1.8;
+
+}
+
+.transport{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:16px;
+
+    margin:18px 0;
+
+}
+
+.timeline{
+
+    width:100%;
+
+    height:4px;
+
+    background:#222;
+
+    border-radius:20px;
+
+    overflow:hidden;
+
+    margin:30px 0 15px;
+
+}
+
+.timeline-progress{
+
+    width:0%;
+
+    height:100%;
+
+    background:#ff1e1e;
+
+    transition:width .08s linear;
+
+}
+
+.time-display{
+
+    display:flex;
+
+    justify-content:space-between;
+
+    color:#888;
+
+    font-size:.85rem;
+
+}
+
+.audio-tabs{
+
+    display:flex;
+    gap:50px;
+    margin:40px 0;
+
+}
+
+.audio-tab{
+
+    background:none;
+    border:none;
+
+    color:#777;
+
+    font-family:"Bebas Neue",sans-serif;
+
+    font-size:2rem;
+
+    letter-spacing:2px;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+    position:relative;
+
+}
+
+.audio-tab::after{
+
+    content:"";
+
+    position:absolute;
+
+    left:0;
+    bottom:-10px;
+
+    width:0;
+
+    height:3px;
+
+    background:#ff2b2b;
+
+    transition:.3s;
+
+}
+
+.audio-tab.active{
+
+    color:#fff;
+
+}
+
+.audio-tab.active::after{
+
+    width:100%;
+
+}
+
+.audio-tab:hover{
+
+    color:#fff;
+
+}
+
+.compare-switch{
+
+    display:flex;
+
+    gap:15px;
+
+    margin-top:35px;
+
+}
+
+.compare{
+
+    width:140px;
+
+    height:48px;
+
+    background:transparent;
+
+    border:1px solid #333;
+
+    color:#999;
+
+    font-family:"Bebas Neue";
+
+    font-size:1.3rem;
+
+    letter-spacing:2px;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.compare:hover{
+
+    border-color:#ff2b2b;
+
+    color:white;
+
+}
+
+.compare.active{
+
+    background:#ff2b2b;
+
+    color:black;
+
+    border-color:#ff2b2b;
+
+}
+
+#changesList{
+
+    list-style:none;
+
+    padding:0;
+
+}
+
+#changesList li{
+
+    margin:18px 0;
+
+    color:#bbb;
+
+    position:relative;
+
+    padding-left:28px;
+
+}
+
+#changesList li::before{
+
+    content:"✓";
+
+    color:#ff2b2b;
+
+    position:absolute;
+
+    left:0;
+
+}
+
+/* =========================
+   WAVEFORM
+========================= */
+
+#waveform {
+
+    width: 100%;
+    height: 90px;
+    margin: 30px 0;
+    cursor: pointer;
+
+}
+
+
+.transport{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    gap:18px;
+
+    margin:15px 0 20px;
+
+}
+
+.transport-btn{
+
+    width:46px;
+
+    height:46px;
+
+    border:1px solid #333;
+
+    background:transparent;
+
+    color:white;
+
+    border-radius:50%;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+}
+
+.transport-btn:hover{
+
+    border-color:#ff2b2b;
+
+    color:#ff2b2b;
+
+}
+
+.transport-btn{
+
+    width:42px;
+
+    height:42px;
+
+    border-radius:50%;
+
+    border:1px solid rgba(255,255,255,.15);
+
+    background:transparent;
+
+    color:#999;
+
+    cursor:pointer;
+
+    transition:.25s;
+
+    font-size:18px;
+
+}
+
+.transport-btn:hover{
+
+    border-color:#ff2b2b;
+
+    color:#ff2b2b;
+
+}
+
+.timeline{
+
+    position: relative;
+    overflow: visible;
+
+    width:100%;
+    height:6px;
+
+    background:#1a1a1a;
+
+    border-radius:999px;
+
+    cursor:pointer;
+
+}
+
+.timeline-progress{
+    position:absolute;
+    left:0;
+    top:0;
+    height:100%;
+    background:#ff2b2b;
+    border-radius:999px;
+    overflow:visible;
+}
+
+.timeline-handle{
+    position:absolute;
+
+    right:-9px;
+    top:50%;
+
+    width:18px;
+    height:18px;
+
+    transform:translateY(-50%);
+
+    border-radius:50%;
+    background:#ff2b2b;
+    border:3px solid #fff;
+
+    box-shadow:0 0 12px rgba(255,43,43,.5);
+
+    z-index:100;
+}
+
+/* ==========================
+   CTA SECTION
+========================== */
+
+.studio-cta{
+
+    text-align:center;
+
+    padding:140px 0;
+
+}
+
+.cta-label{
+
+    color:#ff2b2b;
+
+    letter-spacing:3px;
+
+    font-size:.8rem;
+
+    text-transform:uppercase;
+
+}
+
+.studio-cta h2{
+
+    margin:20px 0;
+
+    font-size:4rem;
+
+    line-height:1;
+
+    color:#fff;
+
+    text-transform:uppercase;
+
+}
+
+.studio-cta p{
+
+    max-width:650px;
+
+    margin:0 auto 45px;
+
+    color:#888;
+
+    line-height:1.7;
+
+    font-size:1.05rem;
+
+}
+
+.cta-button{
+
+    display:inline-flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    width:260px;
+
+    height:62px;
+
+    border:1px solid #ff2b2b;
+
+    color:#fff;
+
+    text-decoration:none;
+
+    text-transform:uppercase;
+
+    letter-spacing:2px;
+
+    transition:.3s;
+
+}
+
+.cta-button:hover{
+
+    background:#ff2b2b;
+
+    color:#000;
+
+}
+
+.cta-note{
+
+    display:block;
+
+    margin-top:25px;
+
+    color:#666;
+
+    font-size:.9rem;
+
+}
+
+.compare-tip{
+
+    display:flex;
+
+    justify-content:flex-start;
+
+    align-items:center;
+
+    gap:8px;
+
+    margin:14px 0 20px;
+
+    font-size: .8rem;
+    opacity: .8;
+
+    color:#777;
+
+    line-height:1.5;
+
+    text-align:left;
+
+}
+
+.compare-tip strong{
+
+    color:#fff;
+
+    font-weight:600;
+
+}
+
+.info-icon{
+
+    display:flex;
+
+    justify-content:center;
+
+    align-items:center;
+
+    width:18px;
+
+    height:18px;
+
+    border:1px solid #666;
+
+    border-radius:50%;
+
+    font-size:.7rem;
+
+    color:#999;
+
+    flex-shrink:0;
+
+}
