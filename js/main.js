@@ -344,7 +344,43 @@ slotsContainer.appendChild(slot);
 
 });
 
-}
+continueBtn.addEventListener("click", async () => {
+
+    if (continueBtn.disabled) return;
+
+    const selectedTime = sessionTime.innerText.split(" — ")[0];
+
+    try {
+
+        const response = await fetch("/api/create-checkout-session", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                packageType: packageType,
+                date: selectedDate.innerText,
+                time: selectedTime
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.url) {
+            window.location.href = data.url;
+            return;
+        }
+
+        console.error("Stripe error:", data);
+        alert("Unable to start payment.");
+
+    } catch (error) {
+
+        console.error("Checkout error:", error);
+        alert("Unable to connect to payment service.");
+
+    }
+
+});
 
 }
-
