@@ -67,10 +67,9 @@ module.exports = async (req, res) => {
             },
 
             success_url:
-                "https://YOUR-DOMAIN.com/booking-success.html",
-
-            cancel_url:
-                "https://YOUR-DOMAIN.com/checkout.html"
+            "https://mrkll-v1.vercel.app/booking-success.html?session_id={CHECKOUT_SESSION_ID}",
+        cancel_url:
+            "https://YOUR-DOMAIN.com/checkout.html"
         });
 
         return res.status(200).json({
