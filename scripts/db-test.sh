@@ -28,20 +28,36 @@ PSQL=("$PGBIN/psql" -h "$WORK" -p "$PORT" -U postgres -d postgres -v ON_ERROR_ST
 
 echo "== Supabase roles (simulated)"
 "${PSQL[@]}" -f "$ROOT/supabase/tests/supabase_roles.sql"
-echo "== Migration"
-"${PSQL[@]}" -f "$ROOT"/supabase/migrations/*_booking_system.sql
-echo "== Seed (twice, must be idempotent)"
-"${PSQL[@]}" -f "$ROOT/supabase/seed.sql"
-"${PSQL[@]}" -f "$ROOT/supabase/seed.sql"
-echo "== Tests"
-if ! OUT=$("${PSQL[@]}" -At -o /dev/null -f "$ROOT/supabase/tests/booking_system.test.sql" 2>&1); then
-  echo "$OUT" | sed 's/^psql:[^:]*:[0-9]*: \(NOTICE\|ERROR\):  /  /'
-  echo "FAIL: database tests"; exit 1
+echo "== Migrations (in order)"
+for f in "$ROOT"/supabase/migrations/*.sql; do
+  echo "  $(basename "$f")"
+  "${PSQL[@]}" -f "$f"
+done
+echo "== Seed + holidays (twice, must be idempotent)"
+for i in 1 2; do
+  "${PSQL[@]}" -f "$ROOT/supabase/seed.sql"
+  "${PSQL[@]}" -f "$ROOT/supabase/holidays.sql"
+done
+
+for t in "$ROOT"/supabase/tests/*.test.sql; do
+  echo "== Tests: $(basename "$t")"
+  if ! OUT=$("${PSQL[@]}" -At -o /dev/null -f "$t" 2>&1); then
+    echo "$OUT" | sed 's/^psql:[^:]*:[0-9]*: \(NOTICE\|ERROR\):  /  /'
+    echo "FAIL: database tests"; exit 1
+  fi
+  echo "$OUT" | sed 's/^psql:[^:]*:[0-9]*: NOTICE:  /  /'
+  echo "  -> $(echo "$OUT" | grep -c ' ok - ') assertions passed"
+done
+
+# Integration tests: the real API handlers against this database.
+if [ "${RUN_API_TESTS:-1}" = "1" ] && [ -d "$ROOT/tests/integration" ]; then
+  echo "== API integration tests (handlers + real SQL)"
+  TEST_DATABASE_URL="postgresql://postgres@/postgres?host=$WORK&port=$PORT" \
+    node --test "$ROOT"/tests/integration/*.test.js
 fi
-echo "$OUT" | sed 's/^psql:[^:]*:[0-9]*: NOTICE:  /  /'
-echo "  -> $(echo "$OUT" | grep -c ' ok - ') assertions passed"
 
 echo "== Concurrency: 20 parallel holds on the same slot"
+"${PSQL[@]}" -c "delete from blackout_periods" >/dev/null  # avoid landing on a holiday
 DAY="$("${PSQL[@]}" -At -c "select d from (select (now() at time zone 'Europe/Madrid')::date + i d from generate_series(8,14) i) x where extract(isodow from d)=2 limit 1")"
 for i in $(seq 1 20); do
   ( "${PSQL[@]}" -At -c "select reference from create_booking_hold('pro','$DAY','15:00','ip$i',repeat(md5('$i'),2))" >"$WORK/c$i.out" 2>"$WORK/c$i.err" || true ) &

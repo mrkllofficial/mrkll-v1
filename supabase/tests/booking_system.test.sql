@@ -43,6 +43,10 @@ create function pg_temp.tok(n int) returns text language sql as $$
   select repeat(md5(n::text), 2);
 $$;
 
+-- Public holidays are tested in holidays.test.sql; remove them here so the
+-- relative dates used below never land on a holiday (rolled back at the end).
+delete from blackout_periods;
+
 set client_min_messages = notice;
 
 -- ---------- 1. seed ---------------------------------------------------
@@ -168,7 +172,15 @@ select pg_temp.ok(not mark_booking_email_sent((select id from t_ids where name =
 insert into blackout_periods (period, reason)
 values (tstzrange((pg_temp.next_day(2, 14) + time '00:00') at time zone 'Europe/Madrid',
                   (pg_temp.next_day(2, 14) + time '23:59') at time zone 'Europe/Madrid'), 'test closure');
-select pg_temp.ok((select status from get_availability('pro', pg_temp.next_day(2, 14), pg_temp.next_day(2, 14))) = 'unavailable', 'blackout day is unavailable');
+select pg_temp.ok((select status from get_availability('pro', pg_temp.next_day(2, 14), pg_temp.next_day(2, 14))) = 'closed', 'full-day blackout is shown as closed');
+select pg_temp.ok((select slots from get_availability('pro', pg_temp.next_day(2, 14), pg_temp.next_day(2, 14))) = '[]'::jsonb, 'closed day lists no slots');
+insert into blackout_periods (period, reason)
+values (tstzrange((pg_temp.next_day(3, 14) + time '10:00') at time zone 'Europe/Madrid',
+                  (pg_temp.next_day(3, 14) + time '14:00') at time zone 'Europe/Madrid'), 'test morning closure');
+select pg_temp.ok((select status from get_availability('starter', pg_temp.next_day(3, 14), pg_temp.next_day(3, 14))) = 'available', 'partial closure keeps the day open');
+select pg_temp.ok((select string_agg(e->>'start' || '=' || (e->>'available'), ',' order by e->>'start')
+                   from get_availability('starter', pg_temp.next_day(3, 14), pg_temp.next_day(3, 14)) g, jsonb_array_elements(g.slots) e)
+                  = '10:00=false,12:30=false,15:00=true,17:30=true,20:00=true', 'partial closure blocks only overlapping slots');
 select pg_temp.fails(format($$select * from create_booking_hold('pro', %L, '10:00', 'ipH', %L)$$, pg_temp.next_day(2, 14), pg_temp.tok(30)), 'SLOT_UNAVAILABLE', 'hold during blackout rejected');
 
 -- ---------- 13. manual (admin) booking -------------------------------

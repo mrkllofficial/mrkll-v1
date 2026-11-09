@@ -1,5 +1,15 @@
 {
+  "private": true,
+  "scripts": {
+    "test": "npm run test:unit && npm run test:db",
+    "test:unit": "node --test tests/unit/*.test.js && TZ=America/Los_Angeles node --test tests/unit/*.test.js && TZ=Pacific/Kiritimati node --test tests/unit/*.test.js",
+    "test:db": "bash scripts/db-test.sh"
+  },
   "dependencies": {
+    "@supabase/supabase-js": "2.118.0",
     "stripe": "^13.11.0"
+  },
+  "devDependencies": {
+    "pg": "8.23.1"
   }
 }
