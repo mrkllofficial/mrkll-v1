@@ -11,5 +11,8 @@
   },
   "devDependencies": {
     "pg": "8.23.1"
+  },
+  "overrides": {
+    "qs": "6.16.2"
   }
 }
