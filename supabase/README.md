@@ -4,6 +4,7 @@
 |---|---|
 | `migrations/20261110000000_booking_system.sql` | Schema completo: tabelle, vincoli anti-sovrapposizione, funzioni, sicurezza |
 | `migrations/20261111000000_closed_days.sql` | I giorni interamente chiusi (festivi, chiusure) risultano `closed` invece di "pieni" |
+| `migrations/20261112000000_webhook.sql` | Webhook Stripe: registro eventi, rimborsi (anche fuori ordine), email inviate una sola volta |
 | `seed.sql` | Dati iniziali: impostazioni, orari di apertura, pacchetti, orari d'inizio (ri-eseguibile) |
 | `holidays.sql` | Festività nazionali, catalane e locali di Barcellona fino a fine 2027, con fonti ufficiali (ri-eseguibile) |
 | `cron.sql` | Job pianificati `pg_cron`: rilascio blocchi scaduti (ogni 5 min) e pulizia GDPR (giornaliera) |
@@ -24,9 +25,10 @@
 4. **SQL Editor → New query**, esegui nell'ordine (incolla il contenuto e premi *Run*):
    1. `migrations/20261110000000_booking_system.sql`
    2. `migrations/20261111000000_closed_days.sql`
-   3. `seed.sql`
-   4. `holidays.sql`
-   5. `cron.sql`
+   3. `migrations/20261112000000_webhook.sql`
+   4. `seed.sql`
+   5. `holidays.sql`
+   6. `cron.sql`
 5. Verifica (nel SQL Editor):
    ```sql
    select * from public.get_availability('pro', current_date, current_date + 13);
@@ -55,6 +57,11 @@ o scrivere dal browser; l'accesso avviene solo dalle funzioni Vercel con la chia
 - **Festività dell'anno successivo:** aggiungi le nuove date in `holidays.sql` quando escono l'ordine
   catalano (di solito in primavera) e il decreto del Comune di Barcellona (di solito a giugno), poi
   rieseguilo: le date già presenti non vengono duplicate.
+- **Email inviate:** tabella `email_notifications` (`sent`, `failed` = verrà ritentata da Stripe,
+  `abandoned` = errore definitivo, ad es. indirizzo non valido).
+- **Rimborsi:** fai il rimborso dalla dashboard Stripe. Con rimborso totale il webhook segna la
+  prenotazione `refunded`, libera lo slot e avvisa cliente e studio; un rimborso parziale non cambia
+  la prenotazione.
 - **Annullare** una prenotazione: imposta `status = 'cancelled'` (lo slot torna libero subito).
   Il rimborso si fa dalla dashboard Stripe.
 

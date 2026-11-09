@@ -58,6 +58,40 @@ function createPgRepository(pool) {
       );
       return rows[0] || null;
     },
+    async beginStripeEvent(eventId, type, bookingId) {
+      const { rows } = await pool.query("select public.begin_stripe_event($1, $2, $3) as r", [eventId, type, bookingId]);
+      return rows[0].r;
+    },
+    async finishStripeEvent(eventId) {
+      await pool.query("select public.finish_stripe_event($1)", [eventId]);
+    },
+    async confirmBooking({ bookingId, sessionId, paymentIntent, amountCents, currency, name, email, phone }) {
+      const { rows } = await pool.query(
+        "select public.confirm_booking($1, $2, $3, $4, $5, $6, $7, $8) as r",
+        [bookingId, sessionId, paymentIntent, amountCents, currency, name, email, phone]
+      );
+      return rows[0].r;
+    },
+    async recordRefund({ paymentIntent, chargeId, amountCents, amountRefundedCents }) {
+      const { rows } = await pool.query("select * from public.record_refund($1, $2, $3, $4)", [
+        paymentIntent, chargeId, amountCents, amountRefundedCents,
+      ]);
+      return rows[0] || null;
+    },
+    async getBookingDetails(bookingId) {
+      const { rows } = await pool.query("select * from public.get_booking_details($1)", [bookingId]);
+      return rows[0] || null;
+    },
+    async claimNotification(key, bookingId, kind) {
+      const { rows } = await pool.query("select public.claim_notification($1, $2, $3) as r", [key, bookingId, kind]);
+      return rows[0].r === true;
+    },
+    async completeNotification(key, outcome, providerMessageId, errorMessage) {
+      const { rows } = await pool.query("select public.complete_notification($1, $2, $3, $4) as r", [
+        key, outcome, providerMessageId, errorMessage,
+      ]);
+      return rows[0].r === true;
+    },
   };
 }
 

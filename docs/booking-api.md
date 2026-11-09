@@ -8,7 +8,7 @@ Le chiavi restano solo lato server.
 | `/api/availability?package=pro&month=2026-12` | GET | Calendario reale del mese: stato dei giorni e orari della griglia (ora di Barcellona) |
 | `/api/create-checkout-session` | POST | Blocca lo slot (35 min) e crea la sessione Stripe Checkout (30 min) |
 | `/api/release-hold` | POST | Rilascia lo slot bloccato da questo browser (annullamento / cambio orario) |
-| `/api/stripe-webhook` | POST | Webhook Stripe (conferma e email) — aggiornamento previsto al passo 2.4 |
+| `/api/stripe-webhook` | POST | Webhook Stripe: conferma, scadenze, rimborsi, conflitti ed email |
 
 ## `POST /api/create-checkout-session`
 
@@ -45,7 +45,36 @@ viene fatta scadere **prima** di liberare lo slot; una sessione già pagata non 
 1. Annullamento su Stripe → ritorno al checkout → `release-hold` (immediato).
 2. Pagamento abbandonato → la sessione Stripe scade dopo 30 min; il blocco scade a 35 min e lo slot
    torna libero automaticamente (alla prenotazione successiva e con il job `pg_cron` ogni 5 min).
-3. Dal passo 2.4: anche il webhook `checkout.session.expired` libera lo slot.
+3. Il webhook `checkout.session.expired` libera lo slot appena Stripe chiude la sessione.
+
+## `POST /api/stripe-webhook`
+
+Firma verificata sul corpo grezzo con `STRIPE_WEBHOOK_SECRET` (tolleranza 5 minuti). Eventi da
+abilitare sull'endpoint in Stripe (Developers → Webhooks):
+
+| Evento | Effetto |
+|---|---|
+| `checkout.session.completed` | Pagamento riuscito → prenotazione `confirmed`, email a cliente e studio |
+| `checkout.session.async_payment_succeeded` | Come sopra (metodi asincroni; oggi non attivi) |
+| `checkout.session.async_payment_failed` | Slot liberato |
+| `checkout.session.expired` | Slot liberato |
+| `charge.refunded` | Rimborso totale → `refunded`, slot liberato, email; parziale → solo registrato |
+
+Casi particolari:
+
+- **Pagamento arrivato dopo la scadenza, slot già preso** → rimborso automatico (una sola volta,
+  chiave di idempotenza `conflict-refund-<booking>`), email di scuse al cliente, avviso allo studio.
+- **Importo diverso dal prezzo** → stato `needs_review`, slot mantenuto, avviso allo studio.
+- **Pagamento senza prenotazione corrispondente** → avviso "ACTION NEEDED" allo studio.
+- **Sessioni create prima del nuovo checkout** (senza `booking_id`) → stesse email del vecchio webhook.
+
+Idempotenza: un evento già elaborato viene ignorato; ogni passo nel database è ripetibile senza
+effetti; ogni email è "prenotata" nel database prima dell'invio, quindi eventi duplicati,
+simultanei o fuori ordine non producono mai conferme o email doppie.
+
+Errori: `400` firma non valida (Stripe non riprova) · `500` errore temporaneo — database, Brevo
+(rete, 5xx, 429, 401/403) o rimborso Stripe — e Stripe riprova per 3 giorni, inviando solo le email
+mancanti. Un errore Brevo definitivo (es. indirizzo non valido) viene registrato come `abandoned`.
 
 ## Variabili d'ambiente (Vercel → Settings → Environment Variables)
 
@@ -58,6 +87,8 @@ Inserirle solo dalla dashboard Vercel, mai nel codice o in chat. Per ora solo ne
 | `STRIPE_SECRET_KEY` | Chiave Stripe **test** (`sk_test_…` o `rk_test_…`) — *Sensitive* |
 | `STRIPE_WEBHOOK_SECRET` | Segreto del webhook (`whsec_…`) — *Sensitive* |
 | `BREVO_API_KEY` | Chiave Brevo — *Sensitive* |
+| `BREVO_SENDER_EMAIL` | Facoltativa, default `studios@mrkll.com` (mittente verificato in Brevo) |
+| `STUDIO_NOTIFICATION_EMAIL` | Facoltativa, default `studios@mrkll.com` (riceve le notifiche) |
 | `SITE_URL` | URL pubblico del sito per quell'ambiente (https) |
 | `BOOKING_IP_SALT` | Stringa casuale di almeno 32 caratteri — *Sensitive* |
 

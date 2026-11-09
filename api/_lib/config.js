@@ -87,4 +87,41 @@ function getIpSalt(env = process.env) {
   return salt;
 }
 
-module.exports = { ConfigError, requireEnv, getSupabaseConfig, getSiteConfig, getStripeConfig, getIpSalt };
+// Stripe webhook signing secret (Developers → Webhooks → endpoint).
+function getWebhookSecret(env = process.env) {
+  const secret = requireEnv("STRIPE_WEBHOOK_SECRET", env);
+  if (!secret.startsWith("whsec_")) {
+    throw new ConfigError("STRIPE_WEBHOOK_SECRET is not a webhook signing secret");
+  }
+  return secret;
+}
+
+const EMAIL_RE = /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/;
+
+// Brevo transactional e-mail. Sender and studio addresses default to the
+// values used by the original webhook (studios@mrkll.com).
+function getEmailConfig(env = process.env) {
+  const apiKey = requireEnv("BREVO_API_KEY", env);
+  const senderEmail = (env.BREVO_SENDER_EMAIL || "studios@mrkll.com").trim();
+  const studioEmail = (env.STUDIO_NOTIFICATION_EMAIL || "studios@mrkll.com").trim();
+  for (const [name, value] of [["BREVO_SENDER_EMAIL", senderEmail], ["STUDIO_NOTIFICATION_EMAIL", studioEmail]]) {
+    if (!EMAIL_RE.test(value)) throw new ConfigError(`${name} is not a valid e-mail address`);
+  }
+  return {
+    apiKey,
+    sender: { email: senderEmail, name: (env.BREVO_SENDER_NAME || "MRKLL Studios").trim() },
+    studio: { email: studioEmail, name: "MRKLL Studios" },
+  };
+}
+
+module.exports = {
+  ConfigError,
+  requireEnv,
+  getSupabaseConfig,
+  getSiteConfig,
+  getStripeConfig,
+  getIpSalt,
+  getWebhookSecret,
+  getEmailConfig,
+  EMAIL_RE,
+};

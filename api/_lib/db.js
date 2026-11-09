@@ -94,6 +94,73 @@ function createSupabaseRepository(client) {
       if (error) throw toDbError(error);
       return data || null;
     },
+
+    // ---- Stripe webhook ----------------------------------------------
+
+    // "new" | "retry" | "processed"
+    async beginStripeEvent(eventId, type, bookingId) {
+      const { data, error } = await client.rpc("begin_stripe_event", {
+        p_id: eventId, p_type: type, p_booking_id: bookingId,
+      });
+      if (error) throw toDbError(error);
+      return data;
+    },
+
+    async finishStripeEvent(eventId) {
+      const { error } = await client.rpc("finish_stripe_event", { p_id: eventId });
+      if (error) throw toDbError(error);
+    },
+
+    // "confirmed" | "already_confirmed" | "needs_review" | "conflict" |
+    // "refunded" | "not_found" | "session_mismatch" | "ignored"
+    async confirmBooking({ bookingId, sessionId, paymentIntent, amountCents, currency, name, email, phone }) {
+      const { data, error } = await client.rpc("confirm_booking", {
+        p_booking_id: bookingId,
+        p_session_id: sessionId,
+        p_payment_intent: paymentIntent,
+        p_amount_cents: amountCents,
+        p_currency: currency,
+        p_customer_name: name,
+        p_customer_email: email,
+        p_customer_phone: phone,
+      });
+      if (error) throw toDbError(error);
+      return data;
+    },
+
+    // Returns { booking_id, status, conflict } or null when no booking matches yet.
+    async recordRefund({ paymentIntent, chargeId, amountCents, amountRefundedCents }) {
+      const { data, error } = await client.rpc("record_refund", {
+        p_payment_intent: paymentIntent,
+        p_charge_id: chargeId,
+        p_amount_cents: amountCents,
+        p_amount_refunded_cents: amountRefundedCents,
+      });
+      if (error) throw toDbError(error);
+      return (Array.isArray(data) ? data[0] : data) || null;
+    },
+
+    async getBookingDetails(bookingId) {
+      const { data, error } = await client.rpc("get_booking_details", { p_booking_id: bookingId });
+      if (error) throw toDbError(error);
+      return (Array.isArray(data) ? data[0] : data) || null;
+    },
+
+    async claimNotification(key, bookingId, kind) {
+      const { data, error } = await client.rpc("claim_notification", {
+        p_key: key, p_booking_id: bookingId, p_kind: kind,
+      });
+      if (error) throw toDbError(error);
+      return data === true;
+    },
+
+    async completeNotification(key, outcome, providerMessageId, errorMessage) {
+      const { data, error } = await client.rpc("complete_notification", {
+        p_key: key, p_outcome: outcome, p_provider_message_id: providerMessageId, p_error: errorMessage,
+      });
+      if (error) throw toDbError(error);
+      return data === true;
+    },
   };
 }
 

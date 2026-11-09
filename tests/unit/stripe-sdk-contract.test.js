@@ -16,7 +16,7 @@ const BOOKING_ID = "3f2b9c1e-8d4a-4b6f-9a1c-2e5d7f8a9b0c";
 function interceptedStripe(responder) {
   const requests = [];
   const fakeFetch = async (url, init) => {
-    const headers = Object.fromEntries(Object.entries(init.headers || {}).map(([k, v]) => [k.toLowerCase(), v]));
+    const headers = Object.fromEntries([...new Headers(init.headers || {})]); // plain object (stripe@13) or Headers (newer SDKs)
     const request = { url: String(url), method: init.method, headers, body: new URLSearchParams(init.body || "") };
     requests.push(request);
     const { status = 200, json } = responder(request);
