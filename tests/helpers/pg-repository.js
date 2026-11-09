@@ -34,6 +34,30 @@ function createPgRepository(pool) {
       );
       return rows;
     },
+    async createHold({ packageId, date, startTime, ipHash, releaseTokenHash }) {
+      const { rows } = await pool.query(
+        "select * from public.create_booking_hold($1, $2::date, $3::time, $4, $5)",
+        [packageId, date, startTime, ipHash, releaseTokenHash]
+      );
+      return rows[0];
+    },
+    async attachCheckoutSession(bookingId, sessionId) {
+      const { rows } = await pool.query("select public.attach_checkout_session($1, $2) as ok", [bookingId, sessionId]);
+      return rows[0].ok === true;
+    },
+    async releaseHold(bookingId, reason, { sessionId = null, releaseTokenHash = null } = {}) {
+      const { rows } = await pool.query("select public.release_hold($1, $2, $3, $4) as ok", [
+        bookingId, reason, sessionId, releaseTokenHash,
+      ]);
+      return rows[0].ok === true;
+    },
+    async findHoldForRelease(bookingId, releaseTokenHash) {
+      const { rows } = await pool.query(
+        "select id, status, stripe_checkout_session_id from public.bookings where id = $1 and release_token_hash = $2",
+        [bookingId, releaseTokenHash]
+      );
+      return rows[0] || null;
+    },
   };
 }
 

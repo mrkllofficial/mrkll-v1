@@ -45,6 +45,55 @@ function createSupabaseRepository(client) {
       if (error) throw toDbError(error);
       return data || [];
     },
+
+    // Temporarily holds a slot. Returns the new booking row (see SQL
+    // create_booking_hold) or throws a DbError with a business code.
+    async createHold({ packageId, date, startTime, ipHash, releaseTokenHash }) {
+      const { data, error } = await client.rpc("create_booking_hold", {
+        p_package_id: packageId,
+        p_date: date,
+        p_start_time: startTime,
+        p_ip_hash: ipHash,
+        p_release_token_hash: releaseTokenHash,
+      });
+      if (error) throw toDbError(error);
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row) throw new DbError("create_booking_hold returned no row");
+      return row;
+    },
+
+    async attachCheckoutSession(bookingId, sessionId) {
+      const { data, error } = await client.rpc("attach_checkout_session", {
+        p_booking_id: bookingId,
+        p_session_id: sessionId,
+      });
+      if (error) throw toDbError(error);
+      return data === true;
+    },
+
+    // reason: "cancelled" | "expired". Proof: Stripe session id and/or token hash.
+    async releaseHold(bookingId, reason, { sessionId = null, releaseTokenHash = null } = {}) {
+      const { data, error } = await client.rpc("release_hold", {
+        p_booking_id: bookingId,
+        p_reason: reason,
+        p_session_id: sessionId,
+        p_release_token_hash: releaseTokenHash,
+      });
+      if (error) throw toDbError(error);
+      return data === true;
+    },
+
+    // Only returns the hold when the release token matches.
+    async findHoldForRelease(bookingId, releaseTokenHash) {
+      const { data, error } = await client
+        .from("bookings")
+        .select("id, status, stripe_checkout_session_id")
+        .eq("id", bookingId)
+        .eq("release_token_hash", releaseTokenHash)
+        .maybeSingle();
+      if (error) throw toDbError(error);
+      return data || null;
+    },
   };
 }
 

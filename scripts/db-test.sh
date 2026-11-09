@@ -53,7 +53,7 @@ done
 if [ "${RUN_API_TESTS:-1}" = "1" ] && [ -d "$ROOT/tests/integration" ]; then
   echo "== API integration tests (handlers + real SQL)"
   TEST_DATABASE_URL="postgresql://postgres@/postgres?host=$WORK&port=$PORT" \
-    node --test "$ROOT"/tests/integration/*.test.js
+    node --test --test-concurrency=1 "$ROOT"/tests/integration/*.test.js
 fi
 
 echo "== Concurrency: 20 parallel holds on the same slot"
