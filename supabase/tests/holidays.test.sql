@@ -32,7 +32,19 @@ $$;
 
 set client_min_messages = notice;
 
-select pg_temp.ok((select count(*) from blackout_periods where reason like 'Festiu %') = 19, '19 holidays loaded once (file is idempotent)');
+select pg_temp.ok((select count(*) from blackout_periods where reason like 'Festiu %') = 17, '17 holidays loaded once (file is idempotent)');
+
+-- Exact list as verified on the official texts (BOE, DOGC, Gaseta Municipal).
+select pg_temp.ok((
+  select string_agg(((lower(bp.period) at time zone s.timezone)::date)::text, ',' order by lower(bp.period))
+  from blackout_periods bp, studio_settings s where bp.reason like 'Festiu %')
+  = '2026-12-08,2026-12-25,2026-12-26,2027-01-01,2027-01-06,2027-03-26,2027-03-29,2027-05-01,2027-05-17,'
+    || '2027-06-24,2027-09-11,2027-09-24,2027-10-12,2027-11-01,2027-12-06,2027-12-08,2027-12-25',
+  'holiday dates match the official acts exactly');
+select pg_temp.ok((select count(distinct period) from blackout_periods where reason like 'Festiu %') = 17, 'no duplicate holidays');
+select pg_temp.ok(not exists (
+  select 1 from blackout_periods bp, studio_settings s
+  where bp.reason like 'Festiu %' and extract(isodow from (lower(bp.period) at time zone s.timezone)) = 7), 'no holiday listed on a Sunday');
 
 -- every listed day is a full local day (00:00 to 24:00 Madrid), also across DST
 select pg_temp.ok(bool_and(upper(period) - lower(period) in (interval '24 hours'))
