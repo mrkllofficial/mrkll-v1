@@ -1,0 +1,117 @@
+# =====================================================================
+# Supabase STAGING migration — one SQL file per run, approval required.
+#
+# Trigger: a push to the working branch that changes the request file
+# supabase/deploy/staging-request.json (no change to the default branch
+# is needed; workflow_dispatch would require the workflow on the default
+# branch). Any other push does nothing.
+#
+# Flow:
+#   validate  no secrets, no database: request + file + SHA-256 + lint,
+#             and the supabase-staging environment must already have a
+#             required reviewer and a branch policy (fails closed).
+#   apply     environment supabase-staging -> GitHub waits for approval;
+#             then psql -v ON_ERROR_STOP=1 runs the single file and a
+#             read-only post-check (status.sql or verify.sql).
+#
+# Documentation: docs/staging-migrations.md
+# =====================================================================
+name: Supabase staging migration
+
+on:
+  push:
+    branches:
+      - claude/elegant-hawking-oukftc
+    paths:
+      - supabase/deploy/staging-request.json
+
+permissions: {}
+
+concurrency:
+  group: supabase-staging-database
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate request (no database access)
+    if: github.ref == 'refs/heads/claude/elegant-hawking-oukftc'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      file: ${{ steps.request.outputs.file }}
+      sha256: ${{ steps.request.outputs.sha256 }}
+      request_id: ${{ steps.request.outputs.request_id }}
+      post_check: ${{ steps.request.outputs.post_check }}
+      post_check_sha256: ${{ steps.request.outputs.post_check_sha256 }}
+    steps:
+      - name: Check out the exact commit (credentials not persisted)
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init -q repo
+          git -C repo remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)"
+          git -C repo -c "http.extraheader=${auth}" fetch -q --no-tags --depth=1 origin "${GITHUB_SHA}"
+          git -C repo checkout -q --detach FETCH_HEAD
+          test "$(git -C repo rev-parse HEAD)" = "${GITHUB_SHA}"
+          echo "Checked out ${GITHUB_SHA}"
+
+      - name: Validate request, SQL file and approval gate
+        id: request
+        working-directory: repo
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          MIGRATION_ENVIRONMENT: supabase-staging
+        run: node scripts/migrations/validate-request.js supabase/deploy/staging-request.json
+
+  apply:
+    name: Apply to Supabase staging (approval required)
+    needs: validate
+    if: github.ref == 'refs/heads/claude/elegant-hawking-oukftc'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment:
+      name: supabase-staging
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the exact commit (credentials not persisted)
+        env:
+          TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git init -q repo
+          git -C repo remote add origin "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}.git"
+          auth="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)"
+          git -C repo -c "http.extraheader=${auth}" fetch -q --no-tags --depth=1 origin "${GITHUB_SHA}"
+          git -C repo checkout -q --detach FETCH_HEAD
+          test "$(git -C repo rev-parse HEAD)" = "${GITHUB_SHA}"
+
+      - name: Install the PostgreSQL client
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client >/dev/null
+          fi
+          psql --version
+
+      - name: Apply the migration and run the read-only post-check
+        working-directory: repo
+        env:
+          MIGRATION_FILE: ${{ needs.validate.outputs.file }}
+          MIGRATION_SHA256: ${{ needs.validate.outputs.sha256 }}
+          POST_CHECK_FILE: ${{ needs.validate.outputs.post_check }}
+          POST_CHECK_SHA256: ${{ needs.validate.outputs.post_check_sha256 }}
+          STAGING_PROJECT_REF: ${{ vars.STAGING_PROJECT_REF }}
+          STAGING_DB_HOST: ${{ vars.STAGING_DB_HOST }}
+          STAGING_DB_PORT: ${{ vars.STAGING_DB_PORT }}
+          STAGING_DB_NAME: ${{ vars.STAGING_DB_NAME }}
+          STAGING_DB_USER: ${{ vars.STAGING_DB_USER }}
+          STAGING_DB_SSLMODE: ${{ vars.STAGING_DB_SSLMODE }}
+          STAGING_DB_PASSWORD: ${{ secrets.STAGING_DB_PASSWORD }}
+        run: bash scripts/migrations/apply.sh

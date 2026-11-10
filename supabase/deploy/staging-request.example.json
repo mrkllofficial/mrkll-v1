@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "target": "staging",
+  "file": "supabase/migrations/20261111000000_closed_days.sql",
+  "sha256": "a7ae829fecdc787c2f4f7f6bf877aafd28d5da28d1fa2946f7060dd7648b9e49",
+  "request_id": "staging-2026-11-10-m2",
+  "reason": "Apply migration 2 (closed days) to staging",
+  "post_check": "status"
+}

@@ -90,7 +90,7 @@ echo "== Cron jobs really run"
 q "select booking_id from create_booking_hold('pro', (select d from (select (now() at time zone 'Europe/Madrid')::date + i d from generate_series(8,14) i) x where extract(isodow from d)=2 limit 1), '10:00', 'rehearsal', repeat(md5('r'),2))" >/dev/null
 q "update bookings set hold_expires_at = now() - interval '1 minute'" >/dev/null
 q "select cron.schedule('rehearsal-now', '2 seconds', (select command from cron.job where jobname = 'mrkll-expire-stale-holds'))" >/dev/null
-for i in $(seq 1 20); do
+for _ in $(seq 1 20); do
   [ "$(q "select count(*) from bookings where status = 'expired'")" = "1" ] && break
   sleep 0.5
 done

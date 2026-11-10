@@ -23,18 +23,7 @@ const PASTE_FILES = [
   "status.sql",
 ];
 
-// Removes comments and dollar-quoted bodies (function bodies are opaque to the parser).
-function topLevel(sql) {
-  let out = "";
-  for (let i = 0; i < sql.length;) {
-    if (sql.startsWith("--", i)) { const j = sql.indexOf("\n", i); i = j < 0 ? sql.length : j; continue; }
-    const m = /^\$[A-Za-z_]*\$/.exec(sql.slice(i));
-    if (m) { const end = sql.indexOf(m[0], i + m[0].length); out += " $body$ "; i = end + m[0].length; continue; }
-    if (sql[i] === "'") { const end = sql.indexOf("'", i + 1); out += " 'str' "; i = end + 1; continue; }
-    out += sql[i++];
-  }
-  return out;
-}
+const { topLevel } = require("../../scripts/migrations/sql-lint");
 
 for (const file of PASTE_FILES) {
   test(`${file}: portable, transactional, no psql meta-commands`, () => {

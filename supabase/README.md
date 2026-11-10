@@ -52,6 +52,12 @@
 Se una chiamata API risponde "function not found" subito dopo la migrazione, ricarica lo schema
 dell'API con `notify pgrst, 'reload schema';`.
 
+## Eseguire un file con GitHub Actions (consigliato)
+
+Le migrazioni dello staging si eseguono con il workflow **Supabase staging migration**: un solo
+file per volta, impronta SHA-256 verificata, approvazione obbligatoria, controllo finale in sola
+lettura. Configurazione e uso: [`docs/staging-migrations.md`](../docs/staging-migrations.md).
+
 ## Eseguire un file con `psql`
 
 1. Installa il client (macOS): `brew install libpq` (il comando sarà
