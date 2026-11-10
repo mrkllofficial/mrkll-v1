@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>MRKLL Contact</title>
+<title>Book Your Session | MRKLL</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,13 +90,13 @@
 
               <div class="calendar-header">
 
-                <button class="calendar-nav" id="prevMonth">←</button>
+                <button type="button" class="calendar-nav" id="prevMonth" aria-label="Previous month" disabled>←</button>
             
-                <h3 id="monthTitle">
-                    August 2026
+                <h3 id="monthTitle" aria-live="polite">
+                    &nbsp;
                 </h3>
             
-                <button class="calendar-nav" id="nextMonth">→</button>
+                <button type="button" class="calendar-nav" id="nextMonth" aria-label="Next month" disabled>→</button>
             
             </div>
             
@@ -115,6 +115,12 @@
             <div id="calendarDays" class="calendar-days">
             
             </div>
+
+            <div class="calendar-legend" aria-hidden="true">
+                <span><i class="legend-swatch available"></i>Available</span>
+                <span><i class="legend-swatch booked"></i>Fully booked</span>
+                <span><i class="legend-swatch closed"></i>Closed / not bookable</span>
+            </div>
             
             <div class="time-slots">
             
@@ -125,6 +131,10 @@
                 <div id="timeSlots" class="slots">
             
                 </div>
+
+                <p class="slots-note">
+                    All times are Barcelona time (CET/CEST). Crossed-out times are already booked.
+                </p>
             
             </div>
 
@@ -138,9 +148,15 @@
                       YOUR BOOKING
                   </span>
 
+                  <div class="package-switch" role="group" aria-label="Session package">
+                      <button type="button" class="slot" data-package="starter">STARTER</button>
+                      <button type="button" class="slot" data-package="pro">PRO</button>
+                      <button type="button" class="slot" data-package="legend">LEGEND</button>
+                  </div>
+
                   <h3 id="package-name">
 
-                      Recording Pro
+                      Recording Session
 
                   </h3>
                   <div class="summary-row">
@@ -160,7 +176,7 @@
 
                       <strong id="package-duration">
 
-                          4 Hours
+                          —
 
                       </strong>
 
@@ -208,7 +224,7 @@
 
                       <strong id="package-price">
 
-                          €200
+                          —
 
                       </strong>
 
@@ -220,7 +236,9 @@
 
                   </p>
 
-                  <button class="btn" disabled>
+                  <p id="bookingMessage" class="booking-message" role="status" aria-live="polite" hidden></p>
+
+                  <button type="button" id="continueBtn" class="btn" disabled>
 
                       CONTINUE →
 
@@ -262,6 +280,8 @@ WHATSAPP
 </a>
 
 <script src="js/main.js"></script>
+<script src="js/booking-core.js"></script>
+<script src="js/booking.js"></script>
 
 </body>
 </html>

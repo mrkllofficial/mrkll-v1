@@ -56,6 +56,15 @@ if [ "${RUN_API_TESTS:-1}" = "1" ] && [ -d "$ROOT/tests/integration" ]; then
     node --test --test-concurrency=1 "$ROOT"/tests/integration/*.test.js
 fi
 
+# Browser tests of the checkout page (Chromium via Playwright), if available.
+if [ "${RUN_E2E_TESTS:-1}" = "1" ] && [ -d "$ROOT/tests/e2e" ] && node -e "require('playwright')" 2>/dev/null; then
+  echo "== Browser tests (checkout page, real API + SQL, fake Stripe)"
+  TEST_DATABASE_URL="postgresql://postgres@/postgres?host=$WORK&port=$PORT" \
+    node --test --test-concurrency=1 "$ROOT"/tests/e2e/*.test.js
+elif [ "${RUN_E2E_TESTS:-1}" = "1" ]; then
+  echo "== Browser tests skipped (playwright not installed)"
+fi
+
 echo "== Concurrency: 20 parallel holds on the same slot"
 "${PSQL[@]}" -c "delete from blackout_periods" >/dev/null  # avoid landing on a holiday
 DAY="$("${PSQL[@]}" -At -c "select d from (select (now() at time zone 'Europe/Madrid')::date + i d from generate_series(8,14) i) x where extract(isodow from d)=2 limit 1")"

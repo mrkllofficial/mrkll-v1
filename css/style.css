@@ -2161,3 +2161,240 @@ CALENDAR
   cursor:not-allowed;
 
 }
+/*======================================
+BOOKING SYSTEM — live availability (checkout.html)
+Same colours and components as the rest of the checkout.
+======================================*/
+
+/* Days, times and packages are real buttons (keyboard + screen readers)
+   but keep the original look. */
+button.calendar-day,
+.slots button.slot,
+.package-switch .slot{
+  background:transparent;
+  color:inherit;
+  font:inherit;
+  border-radius:0;
+  -webkit-appearance:none;
+  appearance:none;
+}
+
+button.calendar-day{
+  width:100%;
+  padding:0;
+}
+
+/* Keep the original selected / unavailable looks over the reset above */
+.slots button.slot.active,
+.package-switch .slot.active{
+  background:#ff1d1d;
+  border-color:#ff1d1d;
+  color:#fff;
+}
+
+.slots button.slot.unavailable{
+  opacity:.35;
+  text-decoration:line-through;
+  border-color:#222;
+}
+
+.calendar-day.booked-day{
+  background:#1c0909;
+  border-color:#3a1212;
+  color:#7a3b3b;
+  opacity:.75;
+  text-decoration:line-through;
+  cursor:not-allowed;
+}
+
+.future-day{
+  opacity:.25;
+  cursor:not-allowed;
+  pointer-events:none;
+  background:transparent;
+  color:#666;
+}
+
+.slot:disabled{
+  pointer-events:none;
+}
+
+.calendar-nav:disabled{
+  opacity:.3;
+  cursor:not-allowed;
+}
+
+.calendar-nav:disabled:hover{
+  border-color:rgba(255,255,255,.08);
+  color:#fff;
+}
+
+.calendar-day:focus-visible,
+.slot:focus-visible,
+.calendar-nav:focus-visible,
+.summary-card .btn:focus-visible{
+  outline:2px solid #ff1d1d;
+  outline-offset:2px;
+}
+
+.calendar-panel.is-loading .calendar-days,
+.calendar-panel.is-loading .slots{
+  opacity:.45;
+  transition:opacity .2s;
+}
+
+.calendar-legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 24px;
+  margin-top:24px;
+  color:#777;
+  font-size:.8rem;
+  letter-spacing:1px;
+}
+
+.legend-swatch{
+  display:inline-block;
+  width:12px;
+  height:12px;
+  margin-right:8px;
+  vertical-align:-1px;
+  border:1px solid rgba(255,255,255,.25);
+}
+
+.legend-swatch.booked{
+  background:#1c0909;
+  border-color:#3a1212;
+}
+
+.legend-swatch.closed{
+  background:#181818;
+  border-color:#222;
+}
+
+.slots-note,
+.slots-empty{
+  color:#777;
+  font-size:.85rem;
+  line-height:1.5;
+}
+
+.slots-note{
+  margin-top:20px;
+}
+
+/* Package switch (Starter / Pro / Legend) inside the summary card */
+.package-switch{
+  display:flex;
+  gap:8px;
+  margin:18px 0 22px;
+}
+
+.package-switch .slot{
+  flex:1;
+  padding:10px 6px;
+  font-size:.72rem;
+  letter-spacing:2px;
+  text-align:center;
+}
+
+.package-switch .slot.active{
+  background:#ff1d1d;
+  border-color:#ff1d1d;
+}
+
+/* Continue button: same style as the other MRKLL buttons */
+.summary-card button.btn{
+  background:transparent;
+  color:#fff;
+  font:inherit;
+  font-weight:600;
+  letter-spacing:1px;
+  cursor:pointer;
+}
+
+.summary-card button.btn:hover{
+  background:var(--red);
+  color:#000;
+}
+
+.summary-card button.btn:disabled{
+  opacity:.4;
+  cursor:not-allowed;
+  transform:none;
+  box-shadow:none;
+  background:transparent;
+  color:#fff;
+}
+
+.booking-message{
+  margin:0 0 22px;
+  padding:14px 16px;
+  border:1px solid rgba(255,29,29,.35);
+  background:rgba(255,29,29,.06);
+  color:#ff6b6b;
+  font-size:.88rem;
+  line-height:1.5;
+}
+
+.booking-message.info{
+  border-color:rgba(255,255,255,.12);
+  background:rgba(255,255,255,.03);
+  color:#bbb;
+}
+
+/* Checkout on tablets and phones: one column, no horizontal scroll */
+@media(max-width:900px){
+
+  .checkout-hero{
+    padding:130px 0 80px;
+  }
+
+  .checkout-header{
+    margin-bottom:50px;
+  }
+
+  .checkout-grid{
+    grid-template-columns:1fr;
+    gap:40px;
+  }
+
+  .summary-panel{
+    position:static;
+  }
+
+  .calendar-header{
+    margin-bottom:24px;
+  }
+
+  .calendar-header h3{
+    font-size:1.05rem;
+    letter-spacing:1px;
+  }
+
+  .calendar-weekdays{
+    font-size:.62rem;
+    letter-spacing:1px;
+  }
+
+  .calendar-days{
+    gap:6px;
+  }
+
+  .time-slots{
+    margin-top:36px;
+  }
+
+  .slots{
+    gap:10px;
+  }
+
+  .slots .slot{
+    padding:12px 16px;
+  }
+
+  .summary-card{
+    padding:26px;
+  }
+
+}

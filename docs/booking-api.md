@@ -103,3 +103,32 @@ npm test
 
 Esegue test unitari (con tre fusi orari diversi del server), test SQL e test di integrazione su un
 PostgreSQL locale temporaneo. Nessuna chiamata a Supabase o Stripe reali.
+
+## Pagina di checkout (`checkout.html`)
+
+- `js/booking-core.js`: logica pura (formati, stati di giorni e orari, messaggi d'errore), testata in Node.
+- `js/booking.js`: collega la pagina alle API. Nessun prezzo, durata o orario è scritto nel codice:
+  arrivano tutti da `/api/availability`; al server si inviano solo pacchetto, data e ora d'inizio.
+- Il blocco creato (`bookingId` + `releaseToken`) è salvato in `sessionStorage` (`mrkll.bookingHold`)
+  e viene rilasciato quando il cliente annulla su Stripe, torna indietro col browser o sceglie un
+  altro orario.
+- Il link dai pacchetti resta `checkout.html?package=starter|pro|legend`; il pacchetto si può
+  cambiare anche dal riepilogo.
+
+## Vedere l'anteprima su Vercel (Preview)
+
+Se il repository GitHub è collegato a Vercel, ogni push sul branch `claude/elegant-hawking-oukftc`
+crea automaticamente un deploy **Preview** (non tocca la produzione):
+
+1. Vercel → progetto → **Deployments**: il deploy del branch ha un URL fisso del tipo
+   `https://<progetto>-git-claude-elegant-hawking-oukftc-<team>.vercel.app` (anche nella pagina del
+   commit su GitHub, nella spunta "Vercel").
+2. Apri `<URL>/checkout.html?package=pro`.
+
+Perché il calendario mostri dati reali, l'ambiente **Preview** deve avere le variabili elencate sopra
+(Supabase di staging + chiavi Stripe **test**) e `SITE_URL` uguale all'URL del branch. Senza
+variabili la pagina si apre ma mostra "Booking is temporarily unavailable".
+
+Nota: Vercel protegge di default i deploy Preview con il login (*Deployment Protection*). Il browser
+del proprietario li vede; Stripe invece non può chiamare il webhook su un deploy protetto: per i
+test del webhook servirà il *Protection Bypass for Automation* (passo 2.7).
