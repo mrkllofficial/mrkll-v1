@@ -8,6 +8,13 @@
 
 begin;
 
+do $$
+begin
+  if to_regprocedure('public.package_slots(text, date, date)') is null then
+    raise exception 'Run migration 20261110000000_booking_system.sql first.';
+  end if;
+end $$;
+
 create or replace function public.get_availability(p_package_id text, p_from date, p_to date)
 returns table (day date, status text, slots jsonb)
 language plpgsql stable set search_path = public as $$

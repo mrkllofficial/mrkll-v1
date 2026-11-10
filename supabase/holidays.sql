@@ -24,6 +24,13 @@
 
 begin;
 
+do $$
+begin
+  if not exists (select 1 from public.studio_settings) then
+    raise exception 'studio_settings is empty: run seed.sql before holidays.sql.';
+  end if;
+end $$;
+
 with holidays (day, name, scope, source) as (
   values
     -- 2026 (remaining)

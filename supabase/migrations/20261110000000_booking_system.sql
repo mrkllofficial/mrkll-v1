@@ -16,6 +16,14 @@
 
 begin;
 
+-- Guard: this migration must run exactly once, on a project without it.
+do $$
+begin
+  if to_regclass('public.bookings') is not null then
+    raise exception 'Migration 1 is already applied (public.bookings exists): skip this file and run the next one.';
+  end if;
+end $$;
+
 -- ---------------------------------------------------------------------
 -- Types
 -- ---------------------------------------------------------------------
@@ -663,7 +671,9 @@ declare
   f text;
 begin
   if exists (select 1 from pg_roles where rolname = 'service_role') then
-    grant usage on schema public to service_role;
+    if not has_schema_privilege('service_role', 'public', 'USAGE') then
+      grant usage on schema public to service_role; -- already granted on Supabase
+    end if;
     grant select, insert, update, delete on public.studio_settings, public.opening_hours, public.packages,
           public.package_start_times, public.blackout_periods, public.bookings, public.stripe_events
           to service_role;

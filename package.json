@@ -3,7 +3,8 @@
   "scripts": {
     "test": "npm run test:unit && npm run test:db",
     "test:unit": "node --test tests/unit/*.test.js && TZ=America/Los_Angeles node --test tests/unit/*.test.js && TZ=Pacific/Kiritimati node --test tests/unit/*.test.js",
-    "test:db": "bash scripts/db-test.sh"
+    "test:db": "bash scripts/db-test.sh",
+    "test:staging": "bash scripts/staging-rehearsal.sh"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.118.0",

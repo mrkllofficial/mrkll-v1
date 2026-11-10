@@ -14,6 +14,16 @@
 
 begin;
 
+do $$
+begin
+  if to_regclass('public.bookings') is null then
+    raise exception 'Run migrations 20261110000000 and 20261111000000 first.';
+  end if;
+  if to_regclass('public.payment_refunds') is not null then
+    raise exception 'Migration 3 is already applied (public.payment_refunds exists): skip this file.';
+  end if;
+end $$;
+
 alter table public.bookings add column conflict_at timestamptz;
 
 comment on column public.bookings.conflict_at is

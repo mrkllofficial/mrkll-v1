@@ -164,19 +164,42 @@ function createSupabaseRepository(client) {
   };
 }
 
+// New Supabase keys (sb_secret_…) are not JWTs: Supabase documents that they
+// must be sent in the `apikey` header only. supabase-js also copies the key
+// into `Authorization: Bearer …`, which the gateway may try to parse as a JWT
+// ("Invalid JWT"). This fetch wrapper removes that copy for new-style keys;
+// legacy JWT keys (service_role) are left untouched.
+function apikeyOnlyFetch(secretKey, baseFetch = fetch) {
+  if (!String(secretKey).startsWith("sb_")) return baseFetch;
+  return (input, init = {}) => {
+    const headers = new Headers(init.headers || {});
+    if (headers.get("authorization") === `Bearer ${secretKey}`) {
+      headers.delete("authorization");
+    }
+    headers.set("apikey", secretKey);
+    return baseFetch(input, { ...init, headers });
+  };
+}
+
+function createSupabaseClient(url, secretKey, { fetchImpl } = {}) {
+  return createClient(url, secretKey, {
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+    global: {
+      headers: { "X-Client-Info": "mrkll-api" },
+      fetch: apikeyOnlyFetch(secretKey, fetchImpl || fetch),
+    },
+  });
+}
+
 let cachedRepository = null;
 
 // Lazily created and reused across invocations of a warm function.
 function getRepository() {
   if (!cachedRepository) {
     const { url, secretKey } = getSupabaseConfig();
-    const client = createClient(url, secretKey, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-      global: { headers: { "X-Client-Info": "mrkll-api" } },
-    });
-    cachedRepository = createSupabaseRepository(client);
+    cachedRepository = createSupabaseRepository(createSupabaseClient(url, secretKey));
   }
   return cachedRepository;
 }
 
-module.exports = { createSupabaseRepository, getRepository, toDbError };
+module.exports = { createSupabaseRepository, createSupabaseClient, apikeyOnlyFetch, getRepository, toDbError };
