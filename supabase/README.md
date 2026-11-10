@@ -18,9 +18,12 @@
 > Ogni file SQL è una transazione unica: se si ferma con un errore **non cambia nulla**.
 > I file si rifiutano di partire nell'ordine sbagliato o se sono già stati applicati.
 > Prova generale locale della procedura: `npm run test:staging`.
-> I file non usano blocchi `DO` né vincoli `EXCLUDE` scritti direttamente: il SQL Editor di Supabase
-> controlla le query con un parser che li rifiuta ("Expected: an SQL statement, found: do"). I
-> controlli girano in funzioni temporanee `pg_temp` (esistono solo nella sessione).
+> **Come eseguire i file:** le migrazioni (1–3), `holidays.sql` e `cron.sql` vanno eseguiti con
+> `psql` (vedi sotto). Il SQL Editor di Supabase, prima di eseguire una query, la fa passare in un
+> validatore che non riconosce `DO`, `CREATE FUNCTION`, `CREATE TRIGGER`, `COMMENT` né i vincoli
+> `EXCLUDE` (errori "sql parser error: Expected: …"), e non lo applica sempre allo stesso modo.
+> `psql` invia l'SQL direttamente a PostgreSQL. `seed.sql`, `status.sql` e `verify.sql` funzionano
+> anche nel SQL Editor.
 
 1. **Controlli preliminari** (SQL Editor → New query): `select version();` deve indicare PostgreSQL
    **15 o superiore** (i nuovi progetti usano la 17).
@@ -48,6 +51,21 @@
 
 Se una chiamata API risponde "function not found" subito dopo la migrazione, ricarica lo schema
 dell'API con `notify pgrst, 'reload schema';`.
+
+## Eseguire un file con `psql`
+
+1. Installa il client (macOS): `brew install libpq` (il comando sarà
+   `/opt/homebrew/opt/libpq/bin/psql`, oppure `brew link --force libpq` per usare `psql`).
+2. Stringa di connessione **senza password**: Dashboard → **Connect** → *Session pooler* (compatibile
+   IPv4), del tipo `postgresql://postgres.<ref>@aws-…-eu-central-1.pooler.supabase.com:5432/postgres`.
+   Non inserire la password nella stringa: `psql` la chiederà (è la password del database creata con
+   il progetto; non scriverla in chat né in file).
+3. Scarica il file **dal commit indicato** e verificane l'impronta, poi eseguilo:
+   ```bash
+   psql "postgresql://postgres.<ref>@<host>:5432/postgres?sslmode=require" -v ON_ERROR_STOP=1 -f <file>.sql
+   ```
+   `ON_ERROR_STOP=1` ferma tutto al primo errore; ogni file è una transazione unica, quindi un errore
+   non lascia modifiche parziali.
 
 ## Gestione dallo studio (Table Editor / SQL Editor)
 

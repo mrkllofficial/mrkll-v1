@@ -1,9 +1,10 @@
 "use strict";
 
-// The Supabase SQL Editor checks queries with a SQL parser (sqlparser-rs)
-// before running them. It rejects DO blocks ("Expected: an SQL statement,
-// found: do") and EXCLUDE constraints. Files meant to be pasted there must
-// avoid both (verified separately with sqlparser-rs itself).
+// Portability lint for the setup files. They are run with psql (the
+// Supabase SQL Editor's validator also rejects CREATE FUNCTION/TRIGGER, so
+// it cannot be used for the migrations). Still: no DO blocks, no bare
+// EXCLUDE, no psql meta-commands, no DROP, one transaction per file — and
+// status.sql / verify.sql / seed.sql stay usable in the SQL Editor.
 
 const test = require("node:test");
 const assert = require("node:assert/strict");
@@ -36,7 +37,7 @@ function topLevel(sql) {
 }
 
 for (const file of PASTE_FILES) {
-  test(`${file}: compatible with the Supabase SQL Editor`, () => {
+  test(`${file}: portable, transactional, no psql meta-commands`, () => {
     const sql = fs.readFileSync(path.join(DIR, file), "utf8");
     const top = topLevel(sql);
     assert.doesNotMatch(top, /(^|;)\s*do\s/im, "no DO blocks");
