@@ -9,6 +9,7 @@
 | `holidays.sql` | Festività nazionali, catalane e locali di Barcellona fino a fine 2027, con fonti ufficiali (ri-eseguibile) |
 | `cron.sql` | Job pianificati `pg_cron`: rilascio blocchi scaduti (ogni 5 min) e pulizia GDPR (giornaliera) |
 | `verify.sql` | Verifica finale in **sola lettura**: 20 controlli (schema, RLS, permessi, dati, cron) |
+| `status.sql` | Stato dell'installazione in **sola lettura** (quali passi sono applicati, sicurezza), da usare in qualsiasi momento dopo la migrazione 1 |
 | `tests/` | Test automatici, eseguiti in locale con `npm test` (non toccano Supabase) |
 
 ## Inizializzare lo STAGING (`mrkll-staging`)
@@ -17,6 +18,9 @@
 > Ogni file SQL è una transazione unica: se si ferma con un errore **non cambia nulla**.
 > I file si rifiutano di partire nell'ordine sbagliato o se sono già stati applicati.
 > Prova generale locale della procedura: `npm run test:staging`.
+> I file non usano blocchi `DO` né vincoli `EXCLUDE` scritti direttamente: il SQL Editor di Supabase
+> controlla le query con un parser che li rifiuta ("Expected: an SQL statement, found: do"). I
+> controlli girano in funzioni temporanee `pg_temp` (esistono solo nella sessione).
 
 1. **Controlli preliminari** (SQL Editor → New query): `select version();` deve indicare PostgreSQL
    **15 o superiore** (i nuovi progetti usano la 17).
@@ -31,6 +35,8 @@
       di configurazione appena create e vuote): conferma.
    5. `holidays.sql`
    6. `cron.sql`
+   In qualsiasi momento dopo il file 1 puoi eseguire `status.sql` (sola lettura) per vedere a che
+   punto sei e che la sicurezza sia intatta.
 4. **Verifica:** esegui `verify.sql` (sola lettura). Tutte le 20 righe devono essere `OK` e
    l'ultima `ALL OK`.
 5. **Security Advisor** (Dashboard → Advisors): è atteso solo "RLS Enabled No Policy" (INFO) sulle

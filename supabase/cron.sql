@@ -4,8 +4,12 @@
 -- Database → Extensions → pg_cron). Run AFTER the migrations, seed and
 -- holidays. Safe to re-run: jobs are replaced by name, never duplicated.
 -- =====================================================================
+-- Note: no DO blocks (the Supabase SQL Editor rejects them); checks run in
+-- session-only pg_temp functions instead, inside the same transaction.
 
-do $$
+begin;
+
+create or replace function pg_temp.mrkll_cron_guard() returns void language plpgsql as $$
 begin
   if not exists (select 1 from pg_extension where extname = 'pg_cron') then
     raise exception 'pg_cron is not enabled: Dashboard -> Integrations -> Cron (or Database -> Extensions -> pg_cron), then run this file again.';
@@ -14,6 +18,7 @@ begin
     raise exception 'Run the migrations before cron.sql.';
   end if;
 end $$;
+select pg_temp.mrkll_cron_guard();
 
 -- Safety net: release holds whose time is up, even if a Stripe
 -- "checkout.session.expired" webhook never arrives.
@@ -29,3 +34,5 @@ select cron.schedule(
   '17 3 * * *',
   $$select public.purge_stale_hold_data(interval '30 days')$$
 );
+
+commit;

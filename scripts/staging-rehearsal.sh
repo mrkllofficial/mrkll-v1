@@ -7,6 +7,9 @@
 # that supabase/verify.sql reports ALL OK. Never touches Supabase.
 #
 #   bash scripts/staging-rehearsal.sh
+#   REHEARSAL_M1_FROM=199b81c bash scripts/staging-rehearsal.sh
+#       -> migration 1 taken from that commit (a project where an earlier
+#          version of migration 1 is already applied), the rest from HEAD.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -29,6 +32,13 @@ fi
 
 PSQL=("$PGBIN/psql" -h "$WORK" -p "$PORT" -U postgres -d postgres -v ON_ERROR_STOP=1 -q -X)
 S="$ROOT/supabase"
+M1="$S/migrations/20261110000000_booking_system.sql"
+if [ -n "${REHEARSAL_M1_FROM:-}" ]; then
+  M1="$WORK/m1-${REHEARSAL_M1_FROM}.sql"
+  git -C "$ROOT" show "${REHEARSAL_M1_FROM}:supabase/migrations/20261110000000_booking_system.sql" > "$M1"
+  chmod 644 "$M1"
+  echo "== Migration 1 taken from commit ${REHEARSAL_M1_FROM}"
+fi
 pass() { echo "  ok - $1"; }
 fail() { echo "  FAIL - $1"; exit 1; }
 run() { "${PSQL[@]}" -f "$1" >/dev/null 2>"$WORK/err" || { cat "$WORK/err"; fail "$2"; }; pass "$2"; }
@@ -48,7 +58,10 @@ refuse "$S/migrations/20261112000000_webhook.sql" "Run migrations 20261110000000
 [ "$(q "select count(*) from pg_tables where schemaname='public'")" = "0" ] && pass "database still empty"
 
 echo "== Step 1: migrations in order"
-run "$S/migrations/20261110000000_booking_system.sql" "migration 1"
+run "$M1" "migration 1"
+"${PSQL[@]}" -A -F ' | ' -f "$S/status.sql" | sed 's/^/  status: /'
+"${PSQL[@]}" -At -f "$S/status.sql" | grep -q "^5|.*|OK|" && "${PSQL[@]}" -At -f "$S/status.sql" | grep -q "^8|.*|NOT APPLIED|" \
+  && pass "status.sql: migration 1 applied and secure, migration 2 not yet applied" || fail "status.sql after migration 1"
 run "$S/migrations/20261111000000_closed_days.sql" "migration 2"
 run "$S/migrations/20261112000000_webhook.sql" "migration 3"
 
@@ -63,7 +76,7 @@ refuse "$S/cron.sql" "pg_cron is not enabled" "cron.sql before enabling pg_cron 
 run "$S/cron.sql" "cron jobs scheduled"
 
 echo "== Re-runs are safe"
-refuse "$S/migrations/20261110000000_booking_system.sql" "already applied" "migration 1 again refused"
+refuse "$S/migrations/20261110000000_booking_system.sql" "already applied" "migration 1 (current version) again refused"
 refuse "$S/migrations/20261112000000_webhook.sql" "already applied" "migration 3 again refused"
 run "$S/migrations/20261111000000_closed_days.sql" "migration 2 again (idempotent)"
 run "$S/seed.sql" "seed again"
@@ -87,6 +100,10 @@ done
 q "select cron.unschedule('rehearsal-now')" >/dev/null
 q "select public.purge_stale_hold_data(interval '0 seconds')" >/dev/null && pass "GDPR purge job command runs"
 q "delete from bookings; delete from cron.job_run_details" >/dev/null
+
+echo "== status.sql after the whole setup"
+[ "$("${PSQL[@]}" -At -f "$S/status.sql" | grep -cE '\|(NOT APPLIED|INCOMPLETE|MISSING|EXPOSED|CHECK|NOT ENABLED)\|')" = "0" ] \
+  && pass "status.sql: every step applied, security OK" || { "${PSQL[@]}" -f "$S/status.sql"; fail "status.sql"; }
 
 echo "== verify.sql"
 "${PSQL[@]}" -A -F ' | ' -f "$S/verify.sql" | sed 's/^/  /'

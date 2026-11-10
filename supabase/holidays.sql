@@ -21,15 +21,18 @@
 -- Yearly maintenance: add 2028 when the Catalan order (usually spring)
 -- and the Barcelona decree (usually June) are published.
 -- =====================================================================
+-- Note: no DO blocks (the Supabase SQL Editor rejects them); checks run in
+-- session-only pg_temp functions instead, inside the same transaction.
 
 begin;
 
-do $$
+create or replace function pg_temp.mrkll_holidays_guard() returns void language plpgsql as $$
 begin
   if not exists (select 1 from public.studio_settings) then
     raise exception 'studio_settings is empty: run seed.sql before holidays.sql.';
   end if;
 end $$;
+select pg_temp.mrkll_holidays_guard();
 
 with holidays (day, name, scope, source) as (
   values

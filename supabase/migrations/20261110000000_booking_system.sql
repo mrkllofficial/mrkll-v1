@@ -13,16 +13,19 @@
 --   * Nothing is reachable from the browser: RLS is enabled with no
 --     policies and every function is executable by service_role only.
 -- =====================================================================
+-- Note: no DO blocks (the Supabase SQL Editor rejects them); checks run in
+-- session-only pg_temp functions instead, inside the same transaction.
 
 begin;
 
 -- Guard: this migration must run exactly once, on a project without it.
-do $$
+create or replace function pg_temp.mrkll_m1_guard() returns void language plpgsql as $$
 begin
   if to_regclass('public.bookings') is not null then
     raise exception 'Migration 1 is already applied (public.bookings exists): skip this file and run the next one.';
   end if;
 end $$;
+select pg_temp.mrkll_m1_guard();
 
 -- ---------------------------------------------------------------------
 -- Types
@@ -146,13 +149,22 @@ create table public.bookings (
 
   constraint ends_after_start   check (ends_at > starts_at),
   constraint buffer_after_end   check (blocked_until >= ends_at),
-  constraint pending_needs_hold check (status <> 'pending_payment' or hold_expires_at is not null),
-
-  -- THE KEY RULE: no two active bookings may overlap (buffer included).
-  constraint bookings_no_overlap
-    exclude using gist (during with &&)
-    where (status in ('pending_payment', 'confirmed', 'needs_review'))
+  constraint pending_needs_hold check (status <> 'pending_payment' or hold_expires_at is not null)
 );
+
+-- THE KEY RULE: no two active bookings may overlap (buffer included).
+-- Added with dynamic SQL because the SQL Editor's parser does not know
+-- EXCLUDE constraints; the constraint itself is a plain PostgreSQL one.
+create or replace function pg_temp.mrkll_m1_overlap_rule() returns void language plpgsql as $$
+begin
+  execute $ddl$
+    alter table public.bookings
+      add constraint bookings_no_overlap
+      exclude using gist (during with &&)
+      where (status in ('pending_payment', 'confirmed', 'needs_review'))
+  $ddl$;
+end $$;
+select pg_temp.mrkll_m1_overlap_rule();
 
 create index bookings_pending_idx on public.bookings (hold_expires_at) where status = 'pending_payment';
 create index bookings_during_idx  on public.bookings using gist (during);
@@ -665,7 +677,7 @@ alter table public.blackout_periods    enable row level security;
 alter table public.bookings            enable row level security;
 alter table public.stripe_events       enable row level security;
 
-do $$
+create or replace function pg_temp.mrkll_m1_privileges() returns void language plpgsql as $$
 declare
   r text;
   f text;
@@ -716,5 +728,6 @@ begin
     end if;
   end loop;
 end $$;
+select pg_temp.mrkll_m1_privileges();
 
 commit;

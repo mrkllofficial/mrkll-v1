@@ -11,10 +11,12 @@
 --                          required before sending, so duplicated or
 --                          concurrent webhooks never send an e-mail twice.
 -- =====================================================================
+-- Note: no DO blocks (the Supabase SQL Editor rejects them); checks run in
+-- session-only pg_temp functions instead, inside the same transaction.
 
 begin;
 
-do $$
+create or replace function pg_temp.mrkll_m3_guard() returns void language plpgsql as $$
 begin
   if to_regclass('public.bookings') is null then
     raise exception 'Run migrations 20261110000000 and 20261111000000 first.';
@@ -23,6 +25,7 @@ begin
     raise exception 'Migration 3 is already applied (public.payment_refunds exists): skip this file.';
   end if;
 end $$;
+select pg_temp.mrkll_m3_guard();
 
 alter table public.bookings add column conflict_at timestamptz;
 
@@ -304,7 +307,7 @@ end $$;
 alter table public.payment_refunds     enable row level security;
 alter table public.email_notifications enable row level security;
 
-do $$
+create or replace function pg_temp.mrkll_m3_privileges() returns void language plpgsql as $$
 declare
   r text;
   f text;
@@ -339,5 +342,6 @@ begin
     end if;
   end loop;
 end $$;
+select pg_temp.mrkll_m3_privileges();
 
 commit;

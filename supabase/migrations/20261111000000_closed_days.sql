@@ -5,15 +5,18 @@
 -- "studio closed" apart from "fully booked".
 -- Run after 20261110000000_booking_system.sql. Safe to re-run.
 -- =====================================================================
+-- Note: no DO blocks (the Supabase SQL Editor rejects them); checks run in
+-- session-only pg_temp functions instead, inside the same transaction.
 
 begin;
 
-do $$
+create or replace function pg_temp.mrkll_m2_guard() returns void language plpgsql as $$
 begin
   if to_regprocedure('public.package_slots(text, date, date)') is null then
     raise exception 'Run migration 20261110000000_booking_system.sql first.';
   end if;
 end $$;
+select pg_temp.mrkll_m2_guard();
 
 create or replace function public.get_availability(p_package_id text, p_from date, p_to date)
 returns table (day date, status text, slots jsonb)
@@ -70,7 +73,7 @@ end $$;
 
 -- CREATE OR REPLACE keeps existing privileges; re-assert them anyway.
 revoke all on function public.get_availability(text, date, date) from public;
-do $$
+create or replace function pg_temp.mrkll_m2_privileges() returns void language plpgsql as $$
 begin
   if exists (select 1 from pg_roles where rolname = 'anon') then
     revoke all on function public.get_availability(text, date, date) from anon;
@@ -82,5 +85,6 @@ begin
     grant execute on function public.get_availability(text, date, date) to service_role;
   end if;
 end $$;
+select pg_temp.mrkll_m2_privileges();
 
 commit;
